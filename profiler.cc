@@ -8,20 +8,30 @@ const char progName[] = "dfprof";
 ThreadApi thread;
 ProfLog profLog;
 
+#define ERR_EXIT(...) ({ \
+	fprintf(stderr, __VA_ARGS__); exit(1); })
+
 void openThreadByTitle(const char* name)
 {
 	HWND hwnd = FindWindowA(0, name);
+	if(!hwnd) ERR_EXIT("could not find window");
 	if(!thread.open(hwnd)) {
-		printf("failed to open thread by window"); 
-		exit(1); }
+		ERR_EXIT("failed to open thread by window"); }
 }
 
 void openThreadByTid(int tid)
 {
 	if(!thread.open(tid)) {
-		printf("failed to open thread by tid"); 
-		exit(1); }
+		ERR_EXIT("failed to open thread by tid"); }
 }
+
+void openThreadByName(cch* name)
+{	
+	int tid = ProcessApi::mainThread(name);
+	if(!tid) ERR_EXIT("could not find process by name");
+	return openThreadByTid(tid);
+}
+
 
 
 static bool profStop;
@@ -75,11 +85,28 @@ void profile_stop(void)
 
 int main(int argc, char** argv)
 {
-	int tid = atoi(argv[1]);
-	printf("%d\n", tid);
-	openThreadByTid(tid);
+	
+	// print ussage message
+	if(argc < 2) {
+		printf("deadfish sampling profiler\n");
+		printf("  ussage: dfprof <w/n:?>\n");
+		printf("  w: window name\n  n: exe name\n");
+		return 1;
+	}
+	
+	// parse argument
+	char* arg = argv[1];
+	if((!arg[0] || arg[1] != ':'))
+		ERR_EXIT("bad argument");
+	switch(arg[0]) {
+	case 'w': openThreadByTitle(arg+2); break;
+	case 'n': openThreadByName(arg+2); break;
+	default: ERR_EXIT("bad argument");
+	}
+	
+	// run the profiler
 	profile_start();
 	getch();
 	profile_stop();
-	return 0;
+	return 0; 
 }

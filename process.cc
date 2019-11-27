@@ -1,4 +1,9 @@
 #include "process.h"
+#include <tlhelp32.h>
+#undef Process32First
+#undef Process32Next
+#undef PROCESSENTRY32
+
 
 BOOL ProcessApi::open(HWND hwnd)
 {
@@ -10,9 +15,11 @@ BOOL ProcessApi::open(HWND hwnd)
 BOOL ProcessApi::open(DWORD pid)
 {
 	dwProcessId = pid;
-	hProcess = OpenThread(PROCESS_ALL_ACCESS, FALSE, pid);
+	hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
 	return !!hProcess;
 }
+
+#include <stdio.h>
 
 SIZE_T ProcessApi::read(SIZE_T addr, void* ptr, SIZE_T size)
 {
@@ -28,6 +35,36 @@ SIZE_T ProcessApi::write(SIZE_T addr, void* ptr, SIZE_T size)
 	WriteProcessMemory(hProcess, (LPVOID)addr,
 		ptr, size, &NumberOfBytesWritten);
 	return NumberOfBytesWritten;
+}
+
+DWORD ProcessApi::mainThread(void)
+{
+	SIZE_T ptid = __readfsdword(0x18)+36;
+	DWORD tid = 0; read(ptid, &tid, 4);
+	return tid;
+}
+
+DWORD ProcessApi::find(const char* name)
+{
+	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+	PROCESSENTRY32 entry = {sizeof(PROCESSENTRY32)};
+	DWORD pid = 0;
+	BOOL hasData = Process32First(snapshot, &entry);
+	while(hasData) {
+		if(!stricmp(entry.szExeFile, name)) {
+			pid = entry.th32ProcessID; break; }
+		hasData = Process32Next(snapshot, &entry);
+	}
+	CloseHandle(snapshot);
+	return pid;
+}
+
+DWORD ProcessApi::mainThread(DWORD pid)
+{
+	ProcessApi pa;
+	if(!pa.open(pid)) return 0;
+	DWORD tid = pa.mainThread();
+	pa.close(); return tid;
 }
 
 BOOL ThreadApi::open(HWND hwnd)
