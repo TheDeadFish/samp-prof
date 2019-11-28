@@ -101,6 +101,7 @@ int main(int argc, char** argv)
 	switch(arg[0]) {
 	case 'w': openThreadByTitle(arg+2); break;
 	case 'n': openThreadByName(arg+2); break;
+	case 't': openThreadByTid(atoi(arg+2)); break;
 	default: ERR_EXIT("bad argument");
 	}
 	
