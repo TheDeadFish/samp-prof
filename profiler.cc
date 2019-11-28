@@ -36,7 +36,7 @@ void openThreadByName(cch* name)
 
 static bool profStop;
 static HANDLE profThread;
-
+static bool show_bytes;
 
 
 void profile_show()
@@ -46,7 +46,13 @@ void profile_show()
 		auto page = profLog.getPageInfo(iPage);
 		printf("%08X: %d\n", page.addr, page.total);
 		for(auto& line : page) {
-			printf("  %08X: %d\n", line.addr, line.total);	}
+			printf("  %08X: %d\n", line.addr, line.total);	
+			if(show_bytes) {
+				auto xxx = profLog.getLineInfo(line.addr);
+				for(auto& x : xxx)
+					printf("    %08X: %d\n", x.addr, x.total);				
+			}
+		}
 	}
 }
 
@@ -93,8 +99,12 @@ int main(int argc, char** argv)
 		printf("  w: window name\n  n: exe name\n");
 		return 1;
 	}
+
+	// get options
+	if(!strcmp(argv[1], "-b")) {
+		show_bytes=1; argv++; }
 	
-	// parse argument
+	// parse argument	
 	char* arg = argv[1];
 	if((!arg[0] || arg[1] != ':'))
 		ERR_EXIT("bad argument");
