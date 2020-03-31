@@ -10,11 +10,21 @@ ProfLog profLog;
 
 #define ERR_EXIT(...) ({ \
 	fprintf(stderr, __VA_ARGS__); exit(1); })
+	
+void find_wait()
+{
+	static bool waiting;
+	if(kbhit()) exit(0);
+	if(!waiting) { waiting = true;
+		printf("waiting "); }
+	printf("."); Sleep(100);
+}
 
 void openThreadByTitle(const char* name)
 {
+RETRY:
 	HWND hwnd = FindWindowA(0, name);
-	if(!hwnd) ERR_EXIT("could not find window");
+	if(!hwnd) { find_wait(); goto RETRY; }
 	if(!thread.open(hwnd)) {
 		ERR_EXIT("failed to open thread by window"); }
 }
@@ -27,12 +37,11 @@ void openThreadByTid(int tid)
 
 void openThreadByName(cch* name)
 {	
+RETRY:
 	int tid = ProcessApi::mainThread(name);
-	if(!tid) ERR_EXIT("could not find process by name");
+	if(!tid) { find_wait(); goto RETRY; }
 	return openThreadByTid(tid);
 }
-
-
 
 static bool profStop;
 static HANDLE profThread;
