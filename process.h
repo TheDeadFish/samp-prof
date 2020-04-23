@@ -4,12 +4,14 @@
 struct ProcessApi
 {
 	HANDLE hProcess;
-	DWORD dwProcessId;
+	//DWORD dwProcessId;
 
-	BOOL open(DWORD pid);
-	BOOL open(HWND hwnd);
+	DWORD open(DWORD pid);
+	DWORD open(HWND hwnd);
 	void close(void) { CloseHandle(hProcess); }
 	
+	SIZE_T memAlloc(SIZE_T size); 
+	void memFree(SIZE_T addr);
 	SIZE_T read(SIZE_T addr, void* ptr, SIZE_T size);
 	SIZE_T write(SIZE_T addr, void* ptr, SIZE_T size);
 	DWORD mainThread(void);

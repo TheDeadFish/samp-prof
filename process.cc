@@ -5,21 +5,32 @@
 #undef PROCESSENTRY32
 
 
-BOOL ProcessApi::open(HWND hwnd)
+DWORD ProcessApi::open(HWND hwnd)
 {
 	DWORD pid = 0;
 	GetWindowThreadProcessId(hwnd, &pid);
 	return open(pid);
 }
 
-BOOL ProcessApi::open(DWORD pid)
+DWORD ProcessApi::open(DWORD pid)
 {
-	dwProcessId = pid;
+	//dwProcessId = pid;
 	hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-	return !!hProcess;
+	return hProcess ? pid : NULL;
 }
 
 #include <stdio.h>
+
+SIZE_T ProcessApi::memAlloc(SIZE_T size)
+{
+	return (SIZE_T)VirtualAllocEx(hProcess, 0, size, 
+		MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+}
+
+void ProcessApi::memFree(SIZE_T addr)
+{
+	VirtualFreeEx(hProcess, (LPVOID)addr, 0, MEM_RELEASE);
+}
 
 SIZE_T ProcessApi::read(SIZE_T addr, void* ptr, SIZE_T size)
 {
