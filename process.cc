@@ -50,7 +50,11 @@ SIZE_T ProcessApi::write(SIZE_T addr, void* ptr, SIZE_T size)
 
 DWORD ProcessApi::mainThread(void)
 {
+#ifdef _WIN64
+	SIZE_T ptid = __readgsdword(0x30)+72;
+#else
 	SIZE_T ptid = __readfsdword(0x18)+36;
+#endif
 	DWORD tid = 0; read(ptid, &tid, 4);
 	return tid;
 }
