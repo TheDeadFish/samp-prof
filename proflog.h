@@ -39,7 +39,6 @@ struct ProfLog
 		u16* x = logData64k[addr>>16];
 		return x ? notNull(x+(addr&0xFFFF)) : 0; }
 	
-	int sorted(int i) { return sortData4k[i]; }
 	
 	
 	
@@ -49,6 +48,6 @@ struct ProfLog
 	enum { nCHUNK = 65536 };
 	
 	u16** logData64k; int* logData4k;
-	xarray<int> sortData4k;
+	xarray<size_t> sortData4k;
 };
 

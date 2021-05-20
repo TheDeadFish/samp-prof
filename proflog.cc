@@ -22,7 +22,7 @@ void ProfLog::free()
 
 static REGCALL(3)
 int compar(ProfLog* This,	const int& a, const int& b) {
-	return This->logData4k[b] - This->logData4k[a]; }
+	return This->logData4k[b/4096] - This->logData4k[a/4096]; }
 	
 void ProfLog::build4k(void)
 {
@@ -32,7 +32,7 @@ void ProfLog::build4k(void)
 		logData4k[i/64] += getLineCount(i*64); }
 	for(int i = 0; i < nPAGES; i++) {
 		sortData4k.len += !!logData4k[i];
-		sortData4k[i] = i; }
+		sortData4k[i] = i*4096; }
 	xqsort(sortData4k.data, nPAGES, compar, this);
 }
 
