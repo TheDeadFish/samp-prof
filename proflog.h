@@ -27,8 +27,8 @@ struct ProfLog
 	//xarray<int> get4k() { return {logData4k, LOG_SIZE/64}; }
 	
 	
-	int getLineCount(u32 slot);
-	PageInfo getPageInfo(int slot);
+	int getLineCount(size_t addr);
+	PageInfo getPageInfo(size_t addr);
 	PageInfo getLineInfo(size_t addr);
 	
 	

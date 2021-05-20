@@ -29,7 +29,7 @@ void ProfLog::build4k(void)
 	std::fill_n(logData4k, nPAGES, 0);
 	std::fill_n(sortData4k.data, nPAGES, 0);
 	for(int i = 0; i < nLINES; i++) {
-		logData4k[i/64] += getLineCount(i); }
+		logData4k[i/64] += getLineCount(i*64); }
 	for(int i = 0; i < nPAGES; i++) {
 		sortData4k.len += !!logData4k[i];
 		sortData4k[i] = i; }
@@ -42,13 +42,13 @@ int compar2(ProfLog* This,
 	const ProfLog::LineInfo& b) {
 	return b.total - a.total; }
 
-ProfLog::PageInfo ProfLog::getPageInfo(int slot)
+ProfLog::PageInfo ProfLog::getPageInfo(size_t addr)
 {
 	PageInfo pi = {};
-	pi.addr = slot*4096;
+	pi.addr = addr;
 	for(int i = 0; i < 64; i++) {
 		pi[i].addr = pi.addr + i*64;
-		pi[i].total = getLineCount(slot*64+i);
+		pi[i].total = getLineCount(addr+i*64);
 		if(pi[i].total) { pi.nLines++;
 			pi.total += pi[i].total; }
 	}
@@ -79,10 +79,10 @@ void ProfLog::log(size_t addr)
 	x[addr&0xFFFF]++;
 }
 
-int ProfLog::getLineCount(u32 slot)
+int ProfLog::getLineCount(size_t addr)
 {
 	int count = 0;
-	u16* x = getData64k(slot*64);
+	u16* x = getData64k(addr);
 	if(x) { for(int i = 0; i < 64; i++) {
 		count += x[i]; }}
 	return count;

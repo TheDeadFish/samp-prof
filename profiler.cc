@@ -52,7 +52,7 @@ void profile_show()
 {
 	profLog.build4k();
 	for(int iPage : profLog.sortData4k) {
-		auto page = profLog.getPageInfo(iPage);
+		auto page = profLog.getPageInfo(iPage*4096);
 		printf("%08X: %d\n", page.addr, page.total);
 		for(auto& line : page) {
 			printf("  %08X: %d\n", line.addr, line.total);	
