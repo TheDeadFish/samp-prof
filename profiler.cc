@@ -75,7 +75,11 @@ DWORD WINAPI profile_loop(
 		thread.suspend(true);
 		thread.getCtx(&context);
 		thread.suspend(false);
+#ifdef _WIN64
+		profLog.log(context.Rip);	
+#else
 		profLog.log(context.Eip);	
+#endif
 		Sleep(1);
 	}
 	
