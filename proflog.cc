@@ -5,8 +5,6 @@ void ProfLog::alloc()
 {
 	this->free();
 	logData64k = xCalloc(nCHUNK);
-	logData4k = xCalloc(nPAGES);
-	sortData4k.data = xMalloc(nPAGES);
 }
 
 void ProfLog::free()
@@ -16,24 +14,41 @@ void ProfLog::free()
 			::free(logData64k[i]);
 		free_ref(logData64k);
 	}
-	free_ref(logData4k);
 	sortData4k.clear();
 }
 
-static REGCALL(3)
-int compar(ProfLog* This,	const int& a, const int& b) {
-	return This->logData4k[b/4096] - This->logData4k[a/4096]; }
-	
+int compar(const ProfLog::PageCount_t& a, const ProfLog::PageCount_t& b) {
+	return b.count - a.count; }
+
+void ProfLog::build4k_64K(size_t addr, u16** data)
+{
+	size_t base;
+	size_t count;
+
+	for(size_t i = 0; i < 65536; i++)
+	{
+		u16* dataPos = data[i];
+		if(dataPos == NULL) {
+			addr += 65536; continue; }
+
+		goto LOOP_BEGIN;
+		for(;; addr++) {
+			if((addr % 4096) == 0) {
+				if(count) sortData4k.push_back(base, count);
+				if((addr % 65536) == 0) break;
+		LOOP_BEGIN:
+				count = 0; base = addr;
+			}
+
+			count += *dataPos++;
+		}
+	}
+}
+
 void ProfLog::build4k(void)
 {
-	std::fill_n(logData4k, nPAGES, 0);
-	std::fill_n(sortData4k.data, nPAGES, 0);
-	for(int i = 0; i < nLINES; i++) {
-		logData4k[i/64] += getLineCount(i*64); }
-	for(int i = 0; i < nPAGES; i++) {
-		sortData4k.len += !!logData4k[i];
-		sortData4k[i] = i*4096; }
-	xqsort(sortData4k.data, nPAGES, compar, this);
+	build4k_64K(0, logData64k);
+	qsort(sortData4k.data, sortData4k.len, compar);
 }
 
 static REGCALL(3)

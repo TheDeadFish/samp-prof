@@ -51,8 +51,8 @@ static bool show_bytes;
 void profile_show()
 {
 	profLog.build4k();
-	for(size_t addr : profLog.sortData4k) {
-		auto page = profLog.getPageInfo(addr);
+	for(auto& x : profLog.sortData4k) {
+		auto page = profLog.getPageInfo(x.addr);
 		printf("%08X: %d\n", page.addr, page.total);
 		for(auto& line : page) {
 			printf("  %08X: %d\n", line.addr, line.total);	

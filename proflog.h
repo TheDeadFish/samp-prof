@@ -47,7 +47,13 @@ struct ProfLog
 	enum { nPAGES = nLINES/64 };
 	enum { nCHUNK = 65536 };
 	
-	u16** logData64k; int* logData4k;
-	xarray<size_t> sortData4k;
+	u16** logData64k;
+
+	struct PageCount_t {
+		size_t addr; size_t count; };
+	xarray<PageCount_t> sortData4k;
+
+	void build4k_64K(size_t addr, u16** data);
+
 };
 
