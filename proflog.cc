@@ -4,16 +4,31 @@
 void ProfLog::alloc()
 {
 	this->free();
+#ifdef _WIN64
+	logData4G = xCalloc(nCHUNK);
+#else
 	logData64k = xCalloc(nCHUNK);
+#endif
+}
+
+#define ENUM_64K(xxx, ...) if(xxx) { \
+	for(size_t i = 0; i < nCHUNK; i++) { \
+		auto& x = xxx[i]; __VA_ARGS__; }}
+
+void ProfLog::free_64K(u16** data)
+{
+	ENUM_64K(data, ::free(x));
+	free_ref(data);
 }
 
 void ProfLog::free()
 {
-	if(logData64k) {
-		for(int i = 0; i < nCHUNK; i++) 
-			::free(logData64k[i]);
-		free_ref(logData64k);
-	}
+#ifdef _WIN64
+	ENUM_64K(logData4G, free_64K(x));
+	free_ref(logData4G);
+#else
+	free_64K(logData64k);
+#endif
 	sortData4k.clear();
 }
 
@@ -47,7 +62,12 @@ void ProfLog::build4k_64K(size_t addr, u16** data)
 
 void ProfLog::build4k(void)
 {
-	build4k_64K(0, logData64k);
+#ifdef _WIN64
+	ENUM_64K(logData4G,
+		if(x) build4k_64K(i*65536, x));
+#else
+	build4k_64K(0, logData64k));
+#endif
 	qsort(sortData4k.data, sortData4k.len, compar);
 }
 
@@ -71,6 +91,17 @@ ProfLog::PageInfo ProfLog::getPageInfo(size_t addr)
 	return pi;
 }
 
+u16* ProfLog::getData64k(size_t addr)
+{
+#ifdef _WIN64
+		u16** logData64k = logData4G[addr>>32];
+		if(!logData64k) return NULL;
+		addr &= 0xFFFFFFFF;
+#endif
+		u16* x = logData64k[addr>>16];
+		return x ? (x+(addr&0xFFFF)) : 0;
+}
+
 ProfLog::PageInfo ProfLog::getLineInfo(size_t addr)
 {
 	PageInfo pi = {};
@@ -89,6 +120,11 @@ ProfLog::PageInfo ProfLog::getLineInfo(size_t addr)
 
 void ProfLog::log(size_t addr)
 {
+#ifdef _WIN64
+	u16**& logData64k = logData4G[addr>>32];
+	if(!logData64k) logData64k = xCalloc(0x10000);
+	addr &= 0xFFFFFFFF;
+#endif
 	u16*& x = logData64k[addr>>16];
 	if(!x) { x = xCalloc(0x10000); }
 	x[addr&0xFFFF]++;

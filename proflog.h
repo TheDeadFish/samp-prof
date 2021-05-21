@@ -35,25 +35,23 @@ struct ProfLog
 	
 	
 	
-	u16* getData64k(size_t addr) {
-		u16* x = logData64k[addr>>16];
-		return x ? notNull(x+(addr&0xFFFF)) : 0; }
-	
-	
-	
-	
-	
-	enum { nLINES = 32*1024*1024 };
-	enum { nPAGES = nLINES/64 };
+	u16* getData64k(size_t addr);
+
+
 	enum { nCHUNK = 65536 };
 	
+#ifdef _WIN64
+	u16*** logData4G;
+#else
 	u16** logData64k;
+#endif
 
 	struct PageCount_t {
 		size_t addr; size_t count; };
 	xarray<PageCount_t> sortData4k;
 
 	void build4k_64K(size_t addr, u16** data);
+	void free_64K(u16** data);
 
 };
 
